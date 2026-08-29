@@ -12,15 +12,15 @@ M = 3 #num of molecular orbitals
 alpha = np.array([0.1,0.1,0.1]) #eV in degenerate case
 alpha_array=np.array([-0.1,0,0.1]) #eV non degenerate case
 
-mu = 0.1 #eV
-mu_L = 1.0
-mu_R = -1.0
+mu = -0.1 #eV
+mu_L = 2.0
+mu_R = -2.0
 #mu_L=mu_R=mu # no potatial bais
 mu_min = min(mu_L, mu_R)
 mu_max = max(mu_L, mu_R)
 
 T = 10 #K
-T_L = 10
+T_L = 300
 T_R= 1
 T_R = T_L= T #no thermal bais
 T_min = min(T_L, T_R)
@@ -89,8 +89,9 @@ buffer = 2.0 #eV
 low_bound = min(T_min*kB,mu_min,es_min)-buffer
 high_bound = max(T_max*kB,mu_max,es_max)+buffer
 print(low_bound,high_bound)
-num_steps = 100000
-
+desired_dE = 1e-4
+num_steps = int((high_bound - low_bound) / desired_dE)
+print(num_steps)
 E_grid = np.linspace(low_bound, high_bound, num_steps)
 dE = E_grid[1]-E_grid[0]
 
@@ -168,5 +169,42 @@ plt.title(r"current heat map vs coupling strength")
 plt.xlabel(r"Left Coupling $\Gamma_L$ (eV)")
 plt.ylabel(r"Right Coupling $\Gamma_R$ (eV)")
 plt.legend(loc="upper left")
+plt.tight_layout()
+plt.show()
+
+# ==========================================
+# 3D Surface Plot with Symmetry Line (No Color Gradient)
+# ==========================================
+Gamma_L_range = np.linspace(0.001, 3.0, 50)
+Gamma_R_range = np.linspace(0.001, 3.0, 50)
+
+X, Y = np.meshgrid(Gamma_L_range, Gamma_R_range)
+Z = np.zeros_like(X)
+
+for i in range(X.shape[0]):
+    for j in range(X.shape[1]):
+        GL = X[i, j]
+        GR = Y[i, j]
+        Z[i, j] = calculate_current(GL, GR, E_grid, dE, M, H_eff, fd_diff)
+
+fig = plt.figure(figsize=(8, 6))
+ax = plt.axes(projection='3d')
+
+# Solid surface without colormap gradient
+surf = ax.plot_surface(X, Y, Z, color='royalblue', edgecolor='none', alpha=0.7)
+
+# --- Symmetric Path (Gamma_L = Gamma_R) ---
+gamma_sym = np.linspace(0.001, 3.0, 50)
+Z_sym = np.array([
+    calculate_current(g, g, E_grid, dE, M, H_eff, fd_diff) for g in gamma_sym
+])
+ax.plot(gamma_sym, gamma_sym, Z_sym, color='red', lw=3, label=r'Symmetry Line ($\Gamma_L = \Gamma_R$)')
+
+ax.set_xlabel(r'$\Gamma_L$ [eV]', labelpad=10)
+ax.set_ylabel(r'$\Gamma_R$ [eV]', labelpad=10)
+ax.set_zlabel(r'Current [$\mu$A]', labelpad=10)
+plt.title(f'3D Surface Plot of Steady-State Current\n(Bias: $\mu_L={mu_L}$, $\mu_R={mu_R}$ eV)')
+ax.legend(loc='upper left')
+
 plt.tight_layout()
 plt.show()
