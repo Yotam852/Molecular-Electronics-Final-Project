@@ -7,7 +7,7 @@ kB = 8.617333262e-5 #eV
 hbar = 1.054571817e-34 #J*Sec
 _2e_h =  e/(np.pi*hbar) # 2e/h  Amp /J
 # constants
-beta = -0.5 #eV
+beta = -0.2 #eV
 M = 3 #num of molecular orbitals
 alpha = np.array([0.1,0.1,0.1]) #eV in degenerate case
 alpha_array=np.array([-0.1,0,0.1]) #eV non degenerate case
@@ -15,14 +15,14 @@ alpha_array=np.array([-0.1,0,0.1]) #eV non degenerate case
 mu = -0.1 #eV
 mu_L = 2.0
 mu_R = -2.0
-#mu_L=mu_R=mu # no potatial bais
+mu_L=mu_R=mu # no potatial bais
 mu_min = min(mu_L, mu_R)
 mu_max = max(mu_L, mu_R)
 
 T = 10 #K
-T_L = 300
-T_R= 1
-T_R = T_L= T #no thermal bais
+T_L = 30
+T_R= 10
+# T_R = T_L= T #no thermal bais
 T_min = min(T_L, T_R)
 T_max = max(T_L, T_R)
 #coupling
@@ -103,26 +103,29 @@ fd_diff =fd_L - fd_R
 #case 1 - asymmetrical coupling
 Gamma_L_values = np.linspace(0.001, 1.0, 100)
 Gamma_R_fixed_values = [0.001,0.01,0.1, 0.5,1] # fixed coupling strengths
+markers = ['o', 's', '^', 'x', 'D']  # Different markers for each Gamma_R value
 
 plt.figure(figsize=(8, 6))
 
-for Gamma_R in Gamma_R_fixed_values:
+for i, Gamma_R in enumerate(Gamma_R_fixed_values):
     currents_asym = np.zeros_like(Gamma_L_values)
     Sigma_R = self_energy(Gamma_R)
 
-    for i, Gamma_L in enumerate(Gamma_L_values):
+    for j, Gamma_L in enumerate(Gamma_L_values):
         Sigma_L = self_energy(Gamma_L)
 
         # current calc
-        currents_asym[i] = calculate_current(Gamma_L, Gamma_R, E_grid, dE, M, H_eff, fd_diff)
+        currents_asym[j] = calculate_current(Gamma_L, Gamma_R, E_grid, dE, M, H_eff, fd_diff)
 
-    plt.plot(Gamma_L_values, currents_asym, lw=2, label=rf"$\Gamma_R = {Gamma_R}$ eV")
-plt.title(r"Asymmetric: Steady-State Current vs. Left Coupling ($\Gamma_L$)")
-plt.axvline(x=2*np.abs(beta), color='red', linestyle=':', lw=2, label=r"$2|\beta|$")
-plt.xlabel(r"Left Coupling Strength $\Gamma_L$ (eV)")
-plt.ylabel(r"Current ($\mu\mathrm{A}$)")
-plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5))
-plt.grid(True, linestyle='--', alpha=0.7)
+    plt.scatter(Gamma_L_values, currents_asym, marker=markers[i], s=50, alpha=0.7, label=f"$\Gamma_R = {Gamma_R}$ eV")
+
+# plt.title(r"Asymmetric: Steady-State Current vs. Left Coupling ($\Gamma_L$)")
+# plt.axvline(x=2*np.abs(beta), color='red', linestyle=':', lw=2, label=r"$2|\beta|$")
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.xlabel(r"$\Gamma_L$ [eV]", fontsize=14)
+plt.ylabel(r"$I$ [$\mu\mathrm{A}$]", fontsize=14)
+plt.legend()
 plt.tight_layout()
 plt.show()
 
@@ -133,14 +136,16 @@ currents_sym = np.zeros_like(Gamma_values)
 for i, Gamma in enumerate(Gamma_values):
     currents_sym[i] = calculate_current(Gamma, Gamma, E_grid, dE, M, H_eff, fd_diff)
 
-plt.figure(figsize=(7, 5))
-plt.plot(Gamma_values, currents_sym, color='purple', lw=2, label="Calculated Current")
-plt.axvline(x=2*np.abs(beta), color='red', linestyle=':', lw=2, label=r"$2|\beta|$")
-plt.title(r"Symmetric: Current vs. Coupling ($\Gamma_L = \Gamma_R = \Gamma$)")
-plt.xlabel(r"Coupling Strength $\Gamma$ (eV)")
-plt.ylabel(r"Current ($\mu\mathrm{A}$)")
-plt.legend(loc='upper right', fontsize=10, shadow=True, borderpad=1)
-plt.grid(True, linestyle='--', alpha=0.7)
+plt.figure(figsize=(8, 6))
+plt.scatter(Gamma_values, currents_sym, color='red', s=75, alpha=0.7, label=r'$\Gamma_L = \Gamma_R$')
+# plt.plot(Gamma_values, currents_sym, color='red', linestyle='--', linewidth=2)
+# plt.axvline(x=2*np.abs(beta), color='red', linestyle=':', linewidth=2, label=r"$2|\beta|$")
+# plt.title(r"Symmetric: Current vs. Coupling ($\Gamma_L = \Gamma_R = \Gamma$)")
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.xlabel(r"$\Gamma$ [eV]", fontsize=14)
+plt.ylabel(r"$I$ [$\mu\mathrm{A}$]", fontsize=14)
+plt.legend()
 plt.tight_layout()
 plt.show()
 
@@ -157,54 +162,56 @@ for i in range(GL_grid.shape[0]):
         GL = GL_grid[i, j]
         GR = GR_grid[i, j]
         current_2D[i, j] = calculate_current(GL, GR, E_grid, dE, M, H_eff, fd_diff)
-plt.figure(figsize=(9, 7))
-contour = plt.contourf(GL_grid, GR_grid, current_2D, levels=50, cmap='viridis')
+plt.figure(figsize=(8, 6))
+contour = plt.contourf(GL_grid, GR_grid, current_2D, levels=50, cmap='seismic')
 
 #colorbar to show what current value each color represents
-plt.colorbar(contour, label=r"Current ($\mu\mathrm{A}$)")
+plt.colorbar(contour, label=r"$I$ [$\mu\mathrm{A}$]")
 
 # dashed line to represent the Symmetric Case (Gamma_L = Gamma_R)
-plt.plot([0.001, 3.0], [0.001, 3.0], color='white', linestyle='--', alpha=0.7, label=r"symmetric case ($\Gamma_L = \Gamma_R$)")
-plt.title(r"current heat map vs coupling strength")
-plt.xlabel(r"Left Coupling $\Gamma_L$ (eV)")
-plt.ylabel(r"Right Coupling $\Gamma_R$ (eV)")
-plt.legend(loc="upper left")
+plt.plot([0.001, 3.0], [0.001, 3.0], color='black', linewidth=2, linestyle='--', alpha=0.7, label=r"$\Gamma_L = \Gamma_R$")
+# plt.title(r"current heat map vs coupling strength")
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.xlabel(r"$\Gamma_L$ [eV]", fontsize=14)
+plt.ylabel(r"$\Gamma_R$ [eV]", fontsize=14)
+plt.legend()
 plt.tight_layout()
 plt.show()
 
 # ==========================================
 # 3D Surface Plot with Symmetry Line (No Color Gradient)
 # ==========================================
-Gamma_L_range = np.linspace(0.001, 3.0, 50)
-Gamma_R_range = np.linspace(0.001, 3.0, 50)
+# Gamma_L_range = np.linspace(0.001, 3.0, 50)
+# Gamma_R_range = np.linspace(0.001, 3.0, 50)
 
-X, Y = np.meshgrid(Gamma_L_range, Gamma_R_range)
-Z = np.zeros_like(X)
+# X, Y = np.meshgrid(Gamma_L_range, Gamma_R_range)
+# Z = np.zeros_like(X)
 
-for i in range(X.shape[0]):
-    for j in range(X.shape[1]):
-        GL = X[i, j]
-        GR = Y[i, j]
-        Z[i, j] = calculate_current(GL, GR, E_grid, dE, M, H_eff, fd_diff)
+# for i in range(X.shape[0]):
+#     for j in range(X.shape[1]):
+#         GL = X[i, j]
+#         GR = Y[i, j]
+#         Z[i, j] = calculate_current(GL, GR, E_grid, dE, M, H_eff, fd_diff)
 
-fig = plt.figure(figsize=(8, 6))
-ax = plt.axes(projection='3d')
+# fig = plt.figure(figsize=(8, 6))
+# ax = plt.axes(projection='3d')
 
-# Solid surface without colormap gradient
-surf = ax.plot_surface(X, Y, Z, color='royalblue', edgecolor='none', alpha=0.7)
+# # Solid surface without colormap gradient
+# surf = ax.plot_surface(X, Y, Z, color='royalblue', edgecolor='none', alpha=0.7)
 
-# --- Symmetric Path (Gamma_L = Gamma_R) ---
-gamma_sym = np.linspace(0.001, 3.0, 50)
-Z_sym = np.array([
-    calculate_current(g, g, E_grid, dE, M, H_eff, fd_diff) for g in gamma_sym
-])
-ax.plot(gamma_sym, gamma_sym, Z_sym, color='red', lw=3, label=r'Symmetry Line ($\Gamma_L = \Gamma_R$)')
+# # --- Symmetric Path (Gamma_L = Gamma_R) ---
+# gamma_sym = np.linspace(0.001, 3.0, 50)
+# Z_sym = np.array([
+#     calculate_current(g, g, E_grid, dE, M, H_eff, fd_diff) for g in gamma_sym
+# ])
+# ax.plot(gamma_sym, gamma_sym, Z_sym, color='red', lw=3, label=r'Symmetry Line ($\Gamma_L = \Gamma_R$)')
 
-ax.set_xlabel(r'$\Gamma_L$ [eV]', labelpad=10)
-ax.set_ylabel(r'$\Gamma_R$ [eV]', labelpad=10)
-ax.set_zlabel(r'Current [$\mu$A]', labelpad=10)
-plt.title(f'3D Surface Plot of Steady-State Current\n(Bias: $\mu_L={mu_L}$, $\mu_R={mu_R}$ eV)')
-ax.legend(loc='upper left')
+# ax.set_xlabel(r'$\Gamma_L$ [eV]', labelpad=10)
+# ax.set_ylabel(r'$\Gamma_R$ [eV]', labelpad=10)
+# ax.set_zlabel(r'$I$ [$\mu\mathrm{A}$]', labelpad=10)
+# plt.title(f'3D Surface Plot of Steady-State Current\n(Bias: $\mu_L={mu_L}$, $\mu_R={mu_R}$ eV)')
+# ax.legend(loc='upper left')
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
