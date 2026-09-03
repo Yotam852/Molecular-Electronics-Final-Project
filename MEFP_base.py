@@ -130,7 +130,7 @@ plt.tight_layout()
 plt.show()
 
 #case 2 - symmetrical
-Gamma_values = np.linspace(0.001, 6.0, 200)
+Gamma_values = np.linspace(0.001, 1.0, 100)
 currents_sym = np.zeros_like(Gamma_values)
 #trace
 for i, Gamma in enumerate(Gamma_values):
@@ -151,8 +151,8 @@ plt.show()
 
 #2D map
 #grid
-Gamma_L_range = np.linspace(0.001, 3.0, 50)
-Gamma_R_range = np.linspace(0.001, 3.0, 50)
+Gamma_L_range = np.linspace(0.001, 1.0, 100)
+Gamma_R_range = np.linspace(0.001, 1.0, 100)
 
 GL_grid, GR_grid = np.meshgrid(Gamma_L_range, Gamma_R_range)
 current_2D = np.zeros_like(GL_grid)
@@ -169,7 +169,7 @@ contour = plt.contourf(GL_grid, GR_grid, current_2D, levels=50, cmap='seismic')
 plt.colorbar(contour, label=r"$I$ [$\mu\mathrm{A}$]")
 
 # dashed line to represent the Symmetric Case (Gamma_L = Gamma_R)
-plt.plot([0.001, 3.0], [0.001, 3.0], color='black', linewidth=2, linestyle='--', alpha=0.7, label=r"$\Gamma_L = \Gamma_R$")
+plt.plot([0.001, 1.0], [0.001, 1.0], color='black', linewidth=2, linestyle='--', alpha=0.7, label=r"$\Gamma_L = \Gamma_R$")
 # plt.title(r"current heat map vs coupling strength")
 plt.xticks(fontsize=14)
 plt.yticks(fontsize=14)
